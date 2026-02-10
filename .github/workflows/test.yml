@@ -1,19 +1,46 @@
 name: Calendar Test Run
 
 on:
-  workflow_dispatch: # これを入れると、ボタンポチで実行
+  workflow_dispatch: # 手動で「Run workflow」ボタンから実行
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
+    
+    # 💡 重要：リポジトリにファイルを書き込む許可を与えます
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+
       - name: Install dependencies
-        run: npm install googleapis typescript tsx @types/node
-      - name: Run test
+        run: npm install
+
+      - name: Run script
         env:
           GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          TZ: 'Asia/Tokyo' # 日本時間で実行
         run: npx tsx index.ts
+
+      # 💡 追加：新しくできたファイルを GitHub に保存する
+      - name: Commit and Push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # meetings フォルダの中身をすべてステージング
+          git add meetings/
+          
+          # 変更がある場合のみ保存（コミット）してアップロード（プッシュ）
+          if ! git diff --cached --exit-code; then
+            git commit -m "Add meeting summaries by AI [skip ci]"
+            git push
+          else
+            echo "保存する変更はありませんでした。"
+          fi
