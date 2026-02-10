@@ -1,0 +1,19 @@
+name: Calendar Test Run
+
+on:
+  workflow_dispatch: # これを入れると、ボタンポチで実行
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install googleapis typescript tsx @types/node
+      - name: Run test
+        env:
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+        run: npx tsx index.ts
