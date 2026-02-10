@@ -13,6 +13,16 @@ const auth = new google.auth.GoogleAuth({
 const drive = google.drive({ version: 'v3', auth });
 const calendar = google.calendar({ version: 'v3', auth });
 
+/**
+ * 💡 絵文字や記号を取り除き、安全なファイル名にする関数
+ */
+function sanitize(text: string): string {
+  return text
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '') // 絵文字削除
+    .replace(/[\\/:*?"<>|]/g, '_') // ファイル名に使えない記号を _ に置換
+    .trim();
+}
+
 async function runActionA() {
   console.log('🔍 自動化対象のユーザーを探索中...');
   const sharedItems = await drive.files.list({ q: "sharedWithMe", fields: "files(owners)" });
@@ -33,22 +43,26 @@ async function runActionA() {
 
       for (const event of events) {
         const title = event.summary || 'Untitled';
+        
+        // 💡 フォルダ名を掃除（絵文字・記号抜き）
         const caseIdMatch = title.match(/^\d{4}/);
-        const folderName = caseIdMatch ? caseIdMatch[0] : title.replace(/[\\/:*?"<>|]/g, '_');
+        const folderName = caseIdMatch ? caseIdMatch[0] : sanitize(title);
         const dir = path.join('meetings', folderName);
+        
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
         const attachments = event.attachments || [];
         for (const att of attachments) {
           if (att.mimeType === 'application/vnd.google-apps.document') {
             
-            // 💡 ここでドライブから「本当のファイル名」を取得
+            // 💡 ドライブから「ファイル名」を取得
             const fileMetadata = await drive.files.get({
               fileId: att.fileId!,
               fields: 'name'
             });
             const realFileName = fileMetadata.data.name || att.title;
-            console.log(`📄 ファイルを発見: ${realFileName} (ID: ${att.fileId})`);
+            
+            console.log(`📄 ファイル発見: ${realFileName}`);
 
             // 内容をエクスポート
             const driveRes = await drive.files.export({
@@ -56,19 +70,17 @@ async function runActionA() {
               mimeType: 'text/plain',
             });
 
+            // 💡 保存ファイル名も掃除
             const dateStr = yesterday.toISOString().split('T')[0].replace(/-/g, '');
-            // 「日付_本当のファイル名.md」で保存
-            const safeFileName = `${dateStr}_${realFileName.replace(/[\\/:*?"<>|]/g, '_')}.md`;
+            const safeFileName = `${dateStr}_${sanitize(realFileName)}.md`;
+            
             fs.writeFileSync(path.join(dir, safeFileName), driveRes.data as string);
             console.log(`✅ 保存完了: ${dir}/${safeFileName}`);
           }
         }
       }
     } catch (err: any) {
-      console.error(`❌ ${email} の処理中にエラーが発生しました:`);
-      // 詳細なエラー内容を出力
-      console.error(err.message);
-      if (err.errors) console.error(JSON.stringify(err.errors, null, 2));
+      console.error(`❌ エラー詳細: ${err.message}`);
     }
   }
 }
