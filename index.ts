@@ -49,3 +49,5 @@ async function testCalendarAccess() {
     console.error('❌ エラー:', error);
   }
 }
+
+testCalendarAccess();
