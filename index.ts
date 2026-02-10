@@ -17,7 +17,7 @@ const calendar = google.calendar({ version: 'v3', auth });
 async function runActionA() {
   console.log('🔍 自動化対象のユーザー（共有設定済み）を探索中...');
 
-  // 1. 自分に共有されているフォルダ/ファイルからユーザーを特定
+  // ドライブの共有アイテムから対象ユーザーのアドレスを抽出
   const sharedItems = await drive.files.list({
     q: "sharedWithMe",
     fields: "files(owners)",
@@ -33,9 +33,7 @@ async function runActionA() {
     return;
   }
 
-  console.log(`✅ ${targetEmails.length} 名のユーザーを検知: ${targetEmails.join(', ')}`);
-
-  // 2. 昨日の時間範囲を設定
+  // 2. 「昨日」の時間範囲を設定
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const timeMin = new Date(yesterday.setHours(0, 0, 0, 0)).toISOString();
@@ -43,7 +41,7 @@ async function runActionA() {
 
   for (const email of targetEmails) {
     try {
-      console.log(`\n--- 🚀 Action A 開始: ${email} ---`);
+      console.log(`\n--- 🚀 Action A (昨日の同期) 開始: ${email} ---`);
       
       const res = await calendar.events.list({
         calendarId: email,
@@ -58,27 +56,30 @@ async function runActionA() {
       for (const event of events) {
         const title = event.summary || 'Untitled';
         
-        // 会議名から不正な文字を除去
-        const sanitizedTitle = title.replace(/[\\/:*?"<>|]/g, '');
-        const dir = path.join('meetings', sanitizedTitle);
+        // 💡 仕様：タイトル先頭4桁からフォルダ名を特定
+        // 例: 「0001_MTG」なら「0001」を取得。なければタイトルそのまま。
+        const caseIdMatch = title.match(/^\d{4}/);
+        const folderName = caseIdMatch ? caseIdMatch[0] : title.replace(/[\\/:*?"<>|]/g, '');
+        
+        const dir = path.join('meetings', folderName);
 
-        // フォルダの自動作成
+        // フォルダがなければ作成
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
         }
 
-        // 添付ファイルをチェック
+        // 添付ファイルの処理
         const attachments = event.attachments || [];
         for (const att of attachments) {
-          // Googleドキュメント（要約ファイル）をMDとして書き出し
           if (att.mimeType === 'application/vnd.google-apps.document') {
-            console.log(`📄 要約ドキュメントを確認: ${att.title}`);
+            console.log(`📄 要約ドキュメントを発見: ${att.title}`);
 
             const driveRes = await drive.files.export({
               fileId: att.fileId!,
               mimeType: 'text/plain',
             });
 
+            // 保存ファイル名: 20260209_summary.md (昨日の日付)
             const dateStr = yesterday.toISOString().split('T')[0].replace(/-/g, '');
             const fileName = `${dateStr}_summary.md`;
             const filePath = path.join(dir, fileName);
@@ -89,11 +90,12 @@ async function runActionA() {
         }
       }
     } catch (err) {
-      console.log(`❌ ${email} の処理中にエラーが発生しました:`, err);
+      console.log(`❌ ${email} の処理中にエラーが発生しました。`);
     }
   }
 }
 
+// 💡 ここが重要！関数の名前に合わせて呼び出します
 runActionA().catch(console.error);
 
 runAutoSync();
