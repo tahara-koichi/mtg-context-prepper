@@ -40,47 +40,42 @@ async function runActionA() {
       console.log(`\n--- 🚀 Action A 開始: ${email} ---`);
       const res = await calendar.events.list({ calendarId: email, timeMin, timeMax, singleEvents: true });
       const events = res.data.items || [];
+      console.log(`📅 昨日の予定数: ${events.length}`);
 
       for (const event of events) {
         const title = event.summary || 'Untitled';
         
-        // 💡 フォルダ名を掃除（絵文字・記号抜き）
+        // 💡 【重要】主催者チェック
+        if (event.organizer?.email !== email) {
+          console.log(`⏩ スキップ: ${title} (主催者ではないため権限がありません)`);
+          continue;
+        }
+
         const caseIdMatch = title.match(/^\d{4}/);
         const folderName = caseIdMatch ? caseIdMatch[0] : sanitize(title);
         const dir = path.join('meetings', folderName);
-        
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
         const attachments = event.attachments || [];
         for (const att of attachments) {
           if (att.mimeType === 'application/vnd.google-apps.document') {
-            
-            // 💡 ドライブから「ファイル名」を取得
-            const fileMetadata = await drive.files.get({
-              fileId: att.fileId!,
-              fields: 'name'
-            });
-            const realFileName = fileMetadata.data.name || att.title;
-            
-            console.log(`📄 ファイル発見: ${realFileName}`);
+            try {
+              const fileMetadata = await drive.files.get({ fileId: att.fileId!, fields: 'name' });
+              const realFileName = fileMetadata.data.name || att.title;
+              const driveRes = await drive.files.export({ fileId: att.fileId!, mimeType: 'text/plain' });
 
-            // 内容をエクスポート
-            const driveRes = await drive.files.export({
-              fileId: att.fileId!,
-              mimeType: 'text/plain',
-            });
-
-            // 💡 保存ファイル名も掃除
-            const dateStr = yesterday.toISOString().split('T')[0].replace(/-/g, '');
-            const safeFileName = `${dateStr}_${sanitize(realFileName)}.md`;
-            
-            fs.writeFileSync(path.join(dir, safeFileName), driveRes.data as string);
-            console.log(`✅ 保存完了: ${dir}/${safeFileName}`);
+              const dateStr = yesterday.toISOString().split('T')[0].replace(/-/g, '');
+              const safeFileName = `${dateStr}_${sanitize(realFileName)}.md`;
+              fs.writeFileSync(path.join(dir, safeFileName), driveRes.data as string);
+              console.log(`✅ 保存成功: ${dir}/${safeFileName}`);
+            } catch (fileErr) {
+              console.log(`⚠️ ファイル取得失敗 (ID: ${att.fileId})。権限が不足している可能性があります。`);
+            }
           }
         }
       }
     } catch (err: any) {
-      console.error(`❌ エラー詳細: ${err.message}`);
+      console.error(`❌ ${email} の処理中にエラーが発生しました: ${err.message}`);
     }
   }
 }
