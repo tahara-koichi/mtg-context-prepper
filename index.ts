@@ -15,14 +15,29 @@ const drive = google.drive({ version: 'v3', auth });
 const calendar = google.calendar({ version: 'v3', auth });
 
 /**
- * 💡 絵文字や記号を取り除き、GitHubで安全に使える名前にする
+ * 💡 絵文字や記号を取り除き、安全な名前にする
  */
 function sanitize(text: string): string {
   return text
     .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '') // 絵文字削除
     .replace(/[\\/:*?"<>|]/g, '_') // 禁止記号を置換
-    .replace(/\s+/g, '_') // スペースをアンダースコアに
     .trim();
+}
+
+/**
+ * 💡 フォルダ名を「ID_案件名」の形式で取得する
+ */
+function getFolderName(title: string): string {
+  // タイトルが「0001_案件名 打ち合わせ」のような形式を想定
+  const match = title.match(/^(\d{4})[_\s-]?(.+)/);
+  if (match) {
+    const id = match[1];
+    // 空白やアンダースコアで区切って、最初の単語（案件名）だけを抽出
+    const rawName = match[2].split(/[\s_]/)[0];
+    return `${id}_${sanitize(rawName)}`;
+  }
+  // IDが見つからない場合はタイトル全体を掃除して使用
+  return sanitize(title);
 }
 
 async function runActionA() {
@@ -30,10 +45,12 @@ async function runActionA() {
   const jstNow = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Tokyo"}));
   console.log(`🕒 現在の日本時刻: ${jstNow.toString()}`);
 
-  // --- 📅 検索範囲の設定 (テスト用: 今日 2/10) ---
+  // --- 📅 検索範囲の設定 ---
+  
+  // 【テスト用】今日 2/10 を同期する場合
   const targetDate = jstNow; 
   
-  /* 【本番用】昨日分を同期する場合はこちらをアンコメントしてください
+  /* 【本番用】昨日分を同期する場合は、上の targetDate をコメントアウトしてこちらを解除してください
   const yesterday = new Date(jstNow);
   yesterday.setDate(yesterday.getDate() - 1);
   const targetDate = yesterday;
@@ -61,8 +78,6 @@ async function runActionA() {
     return;
   }
 
-  console.log(`✅ 検知されたユーザー: ${targetEmails.join(', ')}`);
-
   // 2. 各ユーザーの処理
   for (const email of targetEmails) {
     try {
@@ -82,15 +97,14 @@ async function runActionA() {
       for (const event of events) {
         const title = event.summary || 'Untitled';
         
-        // 💡 対策：自分が主催者でない会議はスキップ
+        // 主催者チェック
         if (event.organizer?.email !== email) {
-          console.log(`⏩ スキップ: ${title} (主催者ではないため権限なし)`);
+          console.log(`⏩ スキップ: ${title} (主催者ではないため)`);
           continue;
         }
 
-        // フォルダ名の決定（先頭4桁IDを優先）
-        const caseIdMatch = title.match(/^\d{4}/);
-        const folderName = caseIdMatch ? caseIdMatch[0] : sanitize(title);
+        // 💡 フォルダ名の決定: 例「0001_ABC株式会社」
+        const folderName = getFolderName(title);
         const dir = path.join('meetings', folderName);
 
         if (!fs.existsSync(dir)) {
@@ -99,28 +113,22 @@ async function runActionA() {
 
         const attachments = event.attachments || [];
         for (const att of attachments) {
-          // Googleドキュメント (Geminiメモ) のみ処理
           if (att.mimeType === 'application/vnd.google-apps.document') {
             try {
-              // 「本当のファイル名」を取得
-              const fileMetadata = await drive.files.get({ fileId: att.fileId!, fields: 'name' });
-              const realFileName = fileMetadata.data.name || att.title;
-              
-              console.log(`📄 取得中: ${realFileName}`);
-
               // 内容をテキストで書き出し
               const driveRes = await drive.files.export({
                 fileId: att.fileId!,
                 mimeType: 'text/plain',
               });
 
+              // 💡 ファイル名: 例「20260210_summary.md」
               const dateStr = targetDate.toISOString().split('T')[0].replace(/-/g, '');
-              const safeFileName = `${dateStr}_${sanitize(realFileName)}.md`;
+              const fileName = `${dateStr}_summary.md`;
               
-              fs.writeFileSync(path.join(dir, safeFileName), driveRes.data as string);
-              console.log(`✅ 保存成功: ${dir}/${safeFileName}`);
+              fs.writeFileSync(path.join(dir, fileName), driveRes.data as string);
+              console.log(`✅ 保存成功: ${dir}/${fileName}`);
             } catch (fileErr: any) {
-              console.log(`❌ ファイル取得失敗 (ID: ${att.fileId}): アクセス権限がありません。`);
+              console.log(`❌ ファイル取得失敗: ${title} の添付ファイルにアクセスできません。`);
             }
           }
         }
