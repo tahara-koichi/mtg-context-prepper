@@ -14,10 +14,13 @@ const auth = new google.auth.GoogleAuth({
 const drive = google.drive({ version: 'v3', auth });
 const calendar = google.calendar({ version: 'v3', auth });
 
+/**
+ * 【一括同期 (Action A)】
+ * 前日の会議データを取得し、フォルダ別に要約を保存する
+ */
 async function runActionA() {
   console.log('🔍 自動化対象のユーザー（共有設定済み）を探索中...');
 
-  // ドライブの共有アイテムから対象ユーザーのアドレスを抽出
   const sharedItems = await drive.files.list({
     q: "sharedWithMe",
     fields: "files(owners)",
@@ -41,7 +44,7 @@ async function runActionA() {
 
   for (const email of targetEmails) {
     try {
-      console.log(`\n--- 🚀 Action A (昨日の同期) 開始: ${email} ---`);
+      console.log(`\n--- 🚀 Action A (昨日分同期) 開始: ${email} ---`);
       
       const res = await calendar.events.list({
         calendarId: email,
@@ -57,10 +60,8 @@ async function runActionA() {
         const title = event.summary || 'Untitled';
         
         // 💡 仕様：タイトル先頭4桁からフォルダ名を特定
-        // 例: 「0001_MTG」なら「0001」を取得。なければタイトルそのまま。
         const caseIdMatch = title.match(/^\d{4}/);
         const folderName = caseIdMatch ? caseIdMatch[0] : title.replace(/[\\/:*?"<>|]/g, '');
-        
         const dir = path.join('meetings', folderName);
 
         // フォルダがなければ作成
@@ -68,7 +69,6 @@ async function runActionA() {
           fs.mkdirSync(dir, { recursive: true });
         }
 
-        // 添付ファイルの処理
         const attachments = event.attachments || [];
         for (const att of attachments) {
           if (att.mimeType === 'application/vnd.google-apps.document') {
@@ -79,10 +79,9 @@ async function runActionA() {
               mimeType: 'text/plain',
             });
 
-            // 保存ファイル名: 20260209_summary.md (昨日の日付)
+            // 保存ファイル名: YYYYMMDD_summary.md
             const dateStr = yesterday.toISOString().split('T')[0].replace(/-/g, '');
-            const fileName = `${dateStr}_summary.md`;
-            const filePath = path.join(dir, fileName);
+            const filePath = path.join(dir, `${dateStr}_summary.md`);
 
             fs.writeFileSync(filePath, driveRes.data as string);
             console.log(`✅ 保存完了: ${filePath}`);
@@ -95,7 +94,5 @@ async function runActionA() {
   }
 }
 
-// 💡 ここが重要！関数の名前に合わせて呼び出します
+// 💡 エラーの元だった箇所：関数名を runActionA に合わせました！
 runActionA().catch(console.error);
-
-runAutoSync();
