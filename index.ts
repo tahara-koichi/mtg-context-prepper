@@ -9,43 +9,43 @@ const auth = new google.auth.GoogleAuth({
 const calendar = google.calendar({ version: 'v3', auth });
 
 async function testCalendarAccess() {
-  console.log('📅 Googleカレンダーへの接続テストを開始します...');
+  console.log('📅 カレンダーの自動探索を開始します...');
 
   try {
-    // 2. カレンダーの予定を取得（今この瞬間から7日間分）
-    const now = new Date();
-    const nextWeek = new Date();
-    nextWeek.setDate(now.getDate() + 7);
+    // 1. サービスアカウントに共有されているカレンダーの一覧を取得
+    const calendarList = await calendar.calendarList.list();
+    
+    // 2. サービスアカウント自身のカレンダー以外（共有されたユーザーのカレンダー）を探す
+    const sharedCalendar = calendarList.data.items?.find(
+      item => item.id !== 'test-266@handy-tiger-487007-n1.iam.gserviceaccount.com'
+    );
 
+    if (!sharedCalendar || !sharedCalendar.id) {
+      console.log('⚠️ 共有されているカレンダーが見つかりませんでした。');
+      console.log('Googleカレンダーの設定で、サービスアカウントのメールアドレスを共有に追加しているか確認してください。');
+      return;
+    }
+
+    const targetId = sharedCalendar.id;
+    console.log(`✅ ターゲットを発見しました: ${targetId} (${sharedCalendar.summary})`);
+
+    // 3. 発見したIDを使って予定を取得
+    const now = new Date();
     const res = await calendar.events.list({
-      calendarId: 'washida_m@so-labo.co.jp', // サービスアカウントが権限を持つメインのカレンダー
+      calendarId: targetId, // 自動で見つけたIDを使用
       timeMin: now.toISOString(),
-      timeMax: nextWeek.toISOString(),
-      maxResults: 10,
+      maxResults: 5,
       singleEvents: true,
       orderBy: 'startTime',
     });
 
-    const events = res.data.items;
-
-    if (!events || events.length === 0) {
-      console.log('✅ 接続成功：ただし、予定は見つかりませんでした。');
-      return;
-    }
-
-    console.log(`✅ 接続成功：直近の予定を ${events.length} 件取得しました:`);
-    events.forEach((event, i) => {
-      const start = event.start?.dateTime || event.start?.date;
-      console.log(`${i + 1}. [${start}] ${event.summary}`);
+    const events = res.data.items || [];
+    console.log(`📅 直近の予定を表示します:`);
+    events.forEach(event => {
+      console.log(`- ${event.start?.dateTime || event.start?.date}: ${event.summary}`);
     });
 
   } catch (error) {
-    console.error('❌ エラーが発生しました:');
-    if (error instanceof Error) {
-      console.error('メッセージ:', error.message);
-      // 認証エラー（鍵が違う、権限がない等）の場合は詳細が表示されます
-    }
+    console.error('❌ エラー:', error);
   }
 }
-
-testCalendarAccess();
