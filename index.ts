@@ -18,7 +18,7 @@ async function testCalendarAccess() {
     nextWeek.setDate(now.getDate() + 7);
 
     const res = await calendar.events.list({
-      calendarId: 'primary', // サービスアカウントが権限を持つメインのカレンダー
+      calendarId: 'washida_m@so-labo.co.jp', // サービスアカウントが権限を持つメインのカレンダー
       timeMin: now.toISOString(),
       timeMax: nextWeek.toISOString(),
       maxResults: 10,
