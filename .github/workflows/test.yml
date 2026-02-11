@@ -7,19 +7,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     
-    # 💡 重要：リポジトリにファイルを書き込む許可を与えます
+    # リポジトリにファイルを書き込む権限を付与
     permissions:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4 # GitHub のリポジトリのコードをワークフロー環境にダウンロード（コピー）
 
-      - name: Setup Node.js
+      - name: Setup Node.js # Node.jsをインストールするためのアクション
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Install dependencies # 外部ライブラリを package.json のリストに基づいてダウンロード
         run: npm install
 
       - name: Run script
