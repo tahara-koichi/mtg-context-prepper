@@ -28,7 +28,7 @@ jobs:
           TZ: 'Asia/Tokyo' # 日本時間で実行
         run: npx tsx index.ts
 
-      # 💡 追加：新しくできたファイルを GitHub に保存する
+      # 新しくできたファイルを GitHub に保存する
       - name: Commit and Push changes
         run: |
           git config --local user.email "action@github.com"
