@@ -1,21 +1,24 @@
 import { google } from 'googleapis';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'fs'; // ファイル操作（作成・書き込み）を行うためのNode.js組み込みモジュール
+import * as path from 'path'; // OS依存（Windows/Unix）のパス区切り文字の違いを吸収し、正規化されたパスを生成するモジュール
 
-// 1. 認証設定
+// サービスアカウントの認証管理インスタンスを生成。
+// Googleの認証ライブラリ google-auth-library を使用
+// google-auth-library: Node.js環境でGoogle APIのOAuth 2.0認証
 const auth = new google.auth.GoogleAuth({
-  credentials: JSON.parse(process.env.GCP_SERVICE_ACCOUNT_KEY || '{}'),
+  credentials: JSON.parse(process.env.GCP_SERVICE_ACCOUNT_KEY || '{}'), // JSON Web Token生成に必要な秘密鍵をロード
   scopes: [
-    'https://www.googleapis.com/auth/calendar.readonly',
-    'https://www.googleapis.com/auth/drive.readonly',
+    'https://www.googleapis.com/auth/calendar.readonly', // Googleカレンダーの読み取り権限を定義
+    'https://www.googleapis.com/auth/drive.readonly', // Googleドライブの読み取り権限を定義
   ],
 });
 
-const drive = google.drive({ version: 'v3', auth });
-const calendar = google.calendar({ version: 'v3', auth });
+const drive = google.drive({ version: 'v3', auth }); // Google Drive API v3 のリソース操作用オブジェクトを生成
+const calendar = google.calendar({ version: 'v3', auth }); // Google Calendar API v3 のリソース操作用オブジェクトを生成
 
 /**
- * 💡 絵文字や記号を取り除き、安全な名前にする
+ * 文字列操作（サニタイズ・フォルダ名生成）
+ * 絵文字や記号を取り除き、安全な名前にする
  */
 function sanitize(text: string): string {
   return text
@@ -25,7 +28,7 @@ function sanitize(text: string): string {
 }
 
 /**
- * 💡 フォルダ名を「ID_案件名」の形式で取得する
+ * フォルダ名を「ID_案件名」の形式で取得する
  */
 function getFolderName(title: string): string {
   // タイトルが「0001_案件名 打ち合わせ」のような形式を想定
@@ -41,16 +44,16 @@ function getFolderName(title: string): string {
 }
 
 async function runActionA() {
-  // --- 🕒 日本時間 (JST) の基準時刻を取得 ---
+  // --- 日本時間 (JST) の基準時刻を取得 ---
   const jstNow = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Tokyo"}));
-  console.log(`🕒 現在の日本時刻: ${jstNow.toString()}`);
+  console.log(`現在の日本時刻: ${jstNow.toString()}`); // ⚠️ テスト終わったら削除
 
-  // --- 📅 検索範囲の設定 ---
+  // --- 検索範囲の設定 ---
   
-  // 【テスト用】今日 2/10 を同期する場合
+  // 【テスト用】今日を同期する場合
   const targetDate = jstNow; 
   
-  /* 【本番用】昨日分を同期する場合は、上の targetDate をコメントアウトしてこちらを解除してください
+  /* 【本番用】昨日分を同期する場合は、上の targetDate をコメントアウトして以下を解除
   const yesterday = new Date(jstNow);
   yesterday.setDate(yesterday.getDate() - 1);
   const targetDate = yesterday;
@@ -59,13 +62,13 @@ async function runActionA() {
   const timeMin = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0).toISOString();
   const timeMax = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999).toISOString();
 
-  console.log(`📅 検索範囲 (JST): ${timeMin} 〜 ${timeMax}`);
+  console.log(`検索範囲 (JST): ${timeMin} 〜 ${timeMax}`);
 
   // 1. 自動化対象のユーザーを探索
-  console.log('🔍 共有設定済みのユーザーを探索中...');
+  console.log('共有設定済みのユーザーを探索中...');
   const sharedItems = await drive.files.list({ 
-    q: "sharedWithMe", 
-    fields: "files(owners)" 
+    q: "sharedWithMe", // Drive APIの検索クエリ サービスアカウントが権限を持つ全リソースから、共有されたアイテムの親メタデータを逆引き
+    fields: "files(owners)" // 不要なメタデータを遮断し、APIレスポンスのペイロードサイズと処理負荷を軽減
   });
 
   const targetEmails = Array.from(new Set(
@@ -81,8 +84,9 @@ async function runActionA() {
   // 2. 各ユーザーの処理
   for (const email of targetEmails) {
     try {
-      console.log(`\n--- 🚀 処理開始: ${email} ---`);
-      
+      console.log(`\n--- 処理開始: ${email} ---`);
+
+       // カレンダー取得
       const res = await calendar.events.list({
         calendarId: email,
         timeMin,
@@ -92,7 +96,7 @@ async function runActionA() {
       });
 
       const events = res.data.items || [];
-      console.log(`📅 対象期間の予定数: ${events.length}`);
+      console.log(`対象期間の予定数: ${events.length}`);
 
       for (const event of events) {
         const title = event.summary || 'Untitled';
@@ -103,7 +107,7 @@ async function runActionA() {
           continue;
         }
 
-        // 💡 フォルダ名の決定: 例「0001_ABC株式会社」
+        // フォルダ名の決定: 例「0001_ABC株式会社」
         const folderName = getFolderName(title);
         const dir = path.join('meetings', folderName);
 
@@ -115,13 +119,13 @@ async function runActionA() {
         for (const att of attachments) {
           if (att.mimeType === 'application/vnd.google-apps.document') {
             try {
-              // 内容をテキストで書き出し
-              const driveRes = await drive.files.export({
+              // Googleドキュメントのエクスポート処理、内容をテキストで書き出し
+              const driveRes = await drive.files.export({ // Googleドキュメントバイナリとして直接ダウンロードできないため、getではなくexport使用
                 fileId: att.fileId!,
                 mimeType: 'text/plain',
               });
 
-              // 💡 ファイル名: 例「20260210_summary.md」
+              // ファイル名: 例「20260210_summary.md」
               const dateStr = targetDate.toISOString().split('T')[0].replace(/-/g, '');
               const fileName = `${dateStr}_summary.md`;
               
