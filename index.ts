@@ -2,6 +2,9 @@ import { google } from 'googleapis';
 import * as fs from 'fs'; // ファイル操作（作成・書き込み）を行うためのNode.js組み込みモジュール
 import * as path from 'path'; // OS依存（Windows/Unix）のパス区切り文字の違いを吸収し、正規化されたパスを生成するモジュール
 
+
+
+// test
 // サービスアカウントの認証管理インスタンスを生成。
 // Googleの認証ライブラリ google-auth-library を使用
 // google-auth-library: Node.js環境でGoogle APIのOAuth 2.0認証
