@@ -1,7 +1,7 @@
 name: Calendar Test Run
 
 on:
-  workflow_dispatch: # 手動で「Run workflow」ボタンから実行
+  workflow_dispatch: # 手動で「Run workflow」ボタンから実行 // ⭐️3時に実行するコードを追加
 
 jobs:
   build:
