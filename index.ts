@@ -219,6 +219,21 @@ async function runActionA() {
         orderBy: 'startTime',
       });
 
+      const tomorrowRes = await calendar.events.list({
+        calendarId: email,
+        timeMin: tomorrowMin,
+        timeMax: tomorrowMax,
+        singleEvents: true,
+        orderBy: 'startTime',
+      });
+
+      const tomorrowEvents = (tomorrowRes.data.items || []) as calendar_v3.Schema$Event[];
+      const tomorrowEventById = new Map(
+        tomorrowEvents
+          .map((e) => (e.summary ? [getMeetingId(e.summary), e] as const : [null, e] as const))
+          .filter((pair): pair is [string, typeof tomorrowEvents[number]] => !!pair[0])
+      );
+
       const events = res.data.items || [];
       console.log(`対象期間の予定数: ${events.length}`);
 
