@@ -35,13 +35,13 @@ function sanitize(text: string): string {
  * フォルダ名を「ID_案件名」の形式で取得する
  */
 function getFolderName(title: string): string {
-  const id = getMeetingId(title);
-  if (id) {
-    const namePart = title.replace(new RegExp(`^${id}[_\\s-]?`), '');
-    const rawName = namePart.split(/[\s_]/)[0];
-    return `${id}_${sanitize(rawName)}`;
-  }
-  return sanitize(title);
+	const id = getMeetingId(title);
+	if (id) {
+		const namePart = title.replace(new RegExp(`^${id}[_\\s-]?`), '');
+		const rawName = namePart.split(/[\s_]/)[0];
+		return `${id}_${sanitize(rawName)}`;
+	}
+	return sanitize(title);
 }
 
 /**
@@ -59,17 +59,17 @@ function getMeetingId(title: string): string | null {
  * @returns 見つかったフォルダのフルパス (meetings/0001_xxx)、なければ null
  */
 function findExistingMeetingFolder(baseDir: string, meetingId: string): string | null {
-  if (!fs.existsSync(baseDir)) return null;
+	if (!fs.existsSync(baseDir)) return null;
 
-  try {
-    const entries = fs.readdirSync(baseDir, { withFileTypes: true });
-    const found = entries.find(entry => 
-      entry.isDirectory() && entry.name.startsWith(`${meetingId}_`)
-    );
-    return found ? path.join(baseDir, found.name) : null;
-  } catch (e) {
-    return null;
-  }
+	try {
+		const entries = fs.readdirSync(baseDir, { withFileTypes: true });
+		const found = entries.find(entry => 
+			entry.isDirectory() && entry.name.startsWith(`${meetingId}_`)
+		);
+		return found ? path.join(baseDir, found.name) : null;
+	} catch (e) {
+		return null;
+	}
 }
 
 /**
@@ -132,13 +132,13 @@ async function saveMeetingDocuments(
 					mimeType: 'text/plain',
 				});
 
-        // フォルダ作成
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-          console.log(`📂 新規フォルダ作成: ${dir}`);
-        } else {
-          console.log(`⏩ フォルダ作成スキップ: ${dir} (既に存在するため)`);
-        }
+				// フォルダ作成
+				if (!fs.existsSync(dir)) {
+					fs.mkdirSync(dir, { recursive: true });
+					console.log(`📂 新規フォルダ作成: ${dir}`);
+				} else {
+					console.log(`⏩ フォルダ作成スキップ: ${dir} (既に存在するため)`);
+				}
 
 				// ファイル名: 例「20260210_summary.md」
 				const dateStr = targetDate.toISOString().split('T')[0].replace(/-/g, '');
@@ -296,20 +296,20 @@ async function runActionA() {
 					continue;
 				}
 
-        let folderName = getFolderName(title);
-        const meetingId = getMeetingId(title);
-        if (meetingId) {
-          // meetingsフォルダ内を検索
-          const existingPath = findExistingMeetingFolder('meetings', meetingId);
-          if (existingPath) {
-            folderName = path.basename(existingPath); 
-            console.log(`📂 meetings配下にフォルダ作成済み: ${folderName}`);
-          } else {
-            console.log(`📁 meetings配下にフォルダ未作成: ${folderName}`);
-          }
-        }
+				let folderName = getFolderName(title);
+				const meetingId = getMeetingId(title);
+				if (meetingId) {
+					// meetingsフォルダ内を検索
+					const existingPath = findExistingMeetingFolder('meetings', meetingId);
+					if (existingPath) {
+						folderName = path.basename(existingPath); 
+						console.log(`📂 meetings配下にフォルダ作成済み: ${folderName}`);
+					} else {
+						console.log(`📁 meetings配下にフォルダ未作成: ${folderName}`);
+					}
+				}
 
-        const dir = path.join('meetings', folderName);
+				const dir = path.join('meetings', folderName);
 				const inboxDir = 'inbox';
 
 				if (!fs.existsSync(inboxDir)) {
