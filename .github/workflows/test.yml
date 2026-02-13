@@ -1,7 +1,9 @@
 name: Calendar Test Run
 
 on:
-  workflow_dispatch: # 手動で「Run workflow」ボタンから実行 // ⭐️3時に実行するコードを追加
+  workflow_dispatch: # 手動で「Run workflow」ボタンから実行
+  # schedule:
+  #   - cron: '0 18 * * *' # 毎日18時(UTC) = 3時（JST）に自動実行 ⚠️ テスト終わったらコメントアウトを解除
 
 jobs:
   build:
