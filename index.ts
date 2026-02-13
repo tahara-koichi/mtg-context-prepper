@@ -140,8 +140,8 @@ async function saveMeetingDocuments(
 					console.log(`⏩ フォルダ作成スキップ: ${dir} (既に存在するため)`);
 				}
 
-				// ファイル名: 例「20260210_summary.md」
-				const dateStr = targetDate.toISOString().split('T')[0].replace(/-/g, '');
+				// ファイル名を生成
+				const dateStr = targetDate.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '');
 				const fileName = `${dateStr}_summary.md`;
 				
 				fs.writeFileSync(path.join(dir, fileName), driveRes.data as string);
