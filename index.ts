@@ -318,7 +318,7 @@ async function runActionA() {
 
 				await saveMeetingDocuments(event, dir, targetDate);
 
-				const previousSummaryPath = getPreviousSummaryPath(dir, targetDate);
+				const previousSummaryPath = getPreviousSummaryPath(dir, tomorrow);
 				const tomorrowEvent = meetingId ? tomorrowEventById.get(meetingId) : undefined;
 				if (tomorrowEvent) {
 					const tomorrowTask = buildTomorrowTask(
