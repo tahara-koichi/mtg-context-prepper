@@ -35,8 +35,8 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # meetings フォルダの中身をすべてステージング
-          git add meetings/
+          # meetings,inbox フォルダの中身をすべてステージング
+          git add meetings/ inbox/
           
           # 変更がある場合のみ保存（コミット）してアップロード（プッシュ）
           if ! git diff --cached --exit-code; then
