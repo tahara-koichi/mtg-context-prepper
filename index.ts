@@ -185,6 +185,10 @@ async function runActionA() {
 
   const timeMin = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0).toISOString();
   const timeMax = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999).toISOString();
+  const tomorrow = new Date(targetDate);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowMin = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 0, 0, 0, 0).toISOString();
+  const tomorrowMax = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59, 999).toISOString();
 
   console.log(`検索範囲 (JST): ${timeMin} 〜 ${timeMax}`);
 
@@ -249,31 +253,28 @@ async function runActionA() {
         // フォルダ名の決定: 例「0001_ABC株式会社」
         const folderName = getFolderName(title);
         const dir = path.join('meetings', folderName);
+        const inboxDir = 'inbox';
 
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
         }
+        if (!fs.existsSync(inboxDir)) {
+          fs.mkdirSync(inboxDir, { recursive: true });
+        }
 
-        const attachments = event.attachments || [];
-        for (const att of attachments) {
-          if (att.mimeType === 'application/vnd.google-apps.document') {
-            try {
-              // Googleドキュメントのエクスポート処理、内容をテキストで書き出し
-              const driveRes = await drive.files.export({ // Googleドキュメントバイナリとして直接ダウンロードできないため、getではなくexport使用
-                fileId: att.fileId!,
-                mimeType: 'text/plain',
-              });
+        await saveMeetingDocuments(event, dir, targetDate);
 
-              // ファイル名: 例「20260210_summary.md」
-              const dateStr = targetDate.toISOString().split('T')[0].replace(/-/g, '');
-              const fileName = `${dateStr}_summary.md`;
-              
-              fs.writeFileSync(path.join(dir, fileName), driveRes.data as string);
-              console.log(`✅ 保存成功: ${dir}/${fileName}`);
-            } catch (fileErr: any) {
-              console.log(`❌ ファイル取得失敗: ${title} の添付ファイルにアクセスできません。`);
-            }
-          }
+        const previousSummaryPath = getPreviousSummaryPath(dir, targetDate);
+        const meetingId = getMeetingId(title);
+        const tomorrowEvent = meetingId ? tomorrowEventById.get(meetingId) : undefined;
+        if (tomorrowEvent) {
+          const tomorrowTask = buildTomorrowTask(
+            tomorrow,
+            folderName,
+            previousSummaryPath,
+            tomorrowEvent
+          );
+          writeTomorrowTaskFile(inboxDir, folderName, tomorrow, tomorrowTask);
         }
       }
     } catch (err: any) {
