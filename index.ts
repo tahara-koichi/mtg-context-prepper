@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import type { calendar_v3 } from 'googleapis';
 import * as fs from 'fs'; // ファイル操作（作成・書き込み）を行うためのNode.js組み込みモジュール
 import * as path from 'path'; // OS依存（Windows/Unix）のパス区切り文字の違いを吸収し、正規化されたパスを生成するモジュール
 
@@ -44,6 +45,126 @@ function getFolderName(title: string): string {
   }
   // IDが見つからない場合はタイトル全体を掃除して使用
   return sanitize(title);
+}
+
+function getMeetingId(title: string): string | null {
+  const match = title.match(/^(\d{4})[_\s-]?/);
+  return match ? match[1] : null;
+}
+
+/**
+ * 予定の時刻をJSTで「HH:mm - HH:mm」の形式にフォーマットする
+ * 
+ * @param start 
+ * @param end 
+ * @returns 
+ */
+function formatJstTimeRange(start?: string | null, end?: string | null): string | null {
+  if (!start || !end) return null;
+  const fmt = new Intl.DateTimeFormat('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const startStr = fmt.format(new Date(start));
+  const endStr = fmt.format(new Date(end));
+  return `${startStr} - ${endStr}`;
+}
+
+/**
+ * 最新の日付のサマリーファイルを探す
+ * @param dir 
+ * @param targetDate 
+ * @returns 
+ */
+function getPreviousSummaryPath(dir: string, targetDate: Date): string | null {
+  if (!fs.existsSync(dir)) return null;
+  const targetDateStr = targetDate.toISOString().split('T')[0].replace(/-/g, '');
+  const files: string[] = fs.readdirSync(dir);
+  const candidates = files
+    .map((name) => {
+      const match = name.match(/^(\d{8})_summary\.md$/);
+      if (!match) return null;
+      const dateStr = match[1];
+      if (dateStr >= targetDateStr) return null;
+      return { name, dateStr };
+    })
+    .filter((v): v is { name: string; dateStr: string } => v !== null)
+    .sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+  if (candidates.length === 0) return null;
+  const last = candidates[candidates.length - 1];
+  return path.join(dir, last.name);
+}
+
+async function saveMeetingDocuments(
+  event: calendar_v3.Schema$Event,
+  dir: string,
+  targetDate: Date
+): Promise<void> {
+  const attachments = event.attachments || [];
+  for (const att of attachments) {
+    if (att.mimeType === 'application/vnd.google-apps.document') {
+      try {
+        // Googleドキュメントのエクスポート処理、内容をテキストで書き出し
+        const driveRes = await drive.files.export({ // Googleドキュメントバイナリとして直接ダウンロードできないため、getではなくexport使用
+          fileId: att.fileId!,
+          mimeType: 'text/plain',
+        });
+
+        // ファイル名: 例「20260210_summary.md」
+        const dateStr = targetDate.toISOString().split('T')[0].replace(/-/g, '');
+        const fileName = `${dateStr}_summary.md`;
+        
+        fs.writeFileSync(path.join(dir, fileName), driveRes.data as string);
+        console.log(`✅ 保存成功: ${dir}/${fileName}`);
+      } catch (fileErr: any) {
+        console.log(`❌ ファイル取得失敗: ${event.summary || 'Untitled'} の添付ファイルにアクセスできません。`);
+      }
+    }
+  }
+}
+
+function buildTomorrowTask(
+  tomorrow: Date,
+  folderName: string,
+  previousSummaryPath: string | null,
+  tomorrowEvent: calendar_v3.Schema$Event
+) {
+  const tomorrowTitle = tomorrowEvent.summary || 'Untitled';
+  const tomorrowScheduledTime = formatJstTimeRange(
+    tomorrowEvent.start?.dateTime,
+    tomorrowEvent.end?.dateTime
+  );
+  return {
+    target_date: tomorrow.toISOString().split('T')[0],
+    meeting_info: {
+      title: tomorrowTitle,
+      folder_name: folderName,
+      calendar_event_id: tomorrowEvent.id || '',
+      scheduled_time: tomorrowScheduledTime || '',
+    },
+    context_files: {
+      previous_summary: previousSummaryPath,
+      latest_raw_document: null,
+    },
+    instructions: [
+      '一旦未定義'
+    ],
+  };
+}
+
+function writeTomorrowTaskFile(
+  inboxDir: string,
+  folderName: string,
+  tomorrow: Date,
+  tomorrowTask: ReturnType<typeof buildTomorrowTask>
+): void {
+  const tomorrowDateStr = tomorrow.toISOString().split('T')[0].replace(/-/g, '');
+  const tomorrowFileName = `${tomorrowDateStr}_${folderName}_tomorrow_task.json`;
+  const tomorrowPath = path.join(inboxDir, tomorrowFileName);
+  fs.writeFileSync(tomorrowPath, JSON.stringify(tomorrowTask, null, 2));
+  console.log(`✅ 翌日タスク作成: ${tomorrowPath}`);
 }
 
 async function runActionA() {
