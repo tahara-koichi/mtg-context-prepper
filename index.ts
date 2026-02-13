@@ -112,6 +112,14 @@ async function saveMeetingDocuments(
 					mimeType: 'text/plain',
 				});
 
+        // フォルダ作成
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+          console.log(`📂 新規フォルダ作成: ${dir}`);
+        } else {
+          console.log(`⏩ フォルダ作成スキップ: ${dir} (既に存在するため)`);
+        }
+
 				// ファイル名: 例「20260210_summary.md」
 				const dateStr = targetDate.toISOString().split('T')[0].replace(/-/g, '');
 				const fileName = `${dateStr}_summary.md`;
@@ -273,9 +281,6 @@ async function runActionA() {
 				const dir = path.join('meetings', folderName);
 				const inboxDir = 'inbox';
 
-				if (!fs.existsSync(dir)) {
-					fs.mkdirSync(dir, { recursive: true });
-				}
 				if (!fs.existsSync(inboxDir)) {
 					fs.mkdirSync(inboxDir, { recursive: true });
 				}
