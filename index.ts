@@ -268,13 +268,12 @@ async function runActionA() {
 	// --- 検索範囲の設定 ---
 
 	// 【テスト用】今日を同期する場合
-	const targetDate = jstNow;  // ⚠️ テスト終わったら削除
+	// const targetDate = jstNow;  // ⚠️ テスト終わったら削除
 
-	/* 【本番用】昨日分を同期する場合は、上の targetDate をコメントアウトして以下を解除
+	// 【本番用】昨日分を同期する場合は、上の targetDate をコメントアウトして以下を解除
 	const yesterday = new Date(jstNow);
 	yesterday.setDate(yesterday.getDate() - 1);
 	const targetDate = yesterday;
-	*/
 
 	const timeMin = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0).toISOString();
 	const timeMax = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999).toISOString();
