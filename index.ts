@@ -126,8 +126,20 @@ async function saveMeetingDocuments(
 	for (const att of attachments) {
 		if (att.mimeType === 'application/vnd.google-apps.document') {
 			try {
-				// Googleドキュメントのエクスポート処理、内容をテキストで書き出し
-				const driveRes = await drive.files.export({ // Googleドキュメントバイナリとして直接ダウンロードできないため、getではなくexport使用
+				// ファイル名を生成
+				const dateStr = targetDate.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '');
+				const fileName = `${dateStr}_summary.md`;
+
+				const fullPath = path.join(dir, fileName);
+
+				// ファイルが存在するかチェック
+				if (fs.existsSync(fullPath)) {
+					console.log(`⏩ ファイル保存スキップ: ${fullPath} (既に存在するため)`);
+					continue; 
+				}
+				
+				// Googleドキュメントのエクスポート処理
+				const driveRes = await drive.files.export({
 					fileId: att.fileId!,
 					mimeType: 'text/plain',
 				});
@@ -140,10 +152,7 @@ async function saveMeetingDocuments(
 					console.log(`⏩ フォルダ作成スキップ: ${dir} (既に存在するため)`);
 				}
 
-				// ファイル名: 例「20260210_summary.md」
-				const dateStr = targetDate.toISOString().split('T')[0].replace(/-/g, '');
-				const fileName = `${dateStr}_summary.md`;
-				
+				// ファイル書き込み
 				fs.writeFileSync(path.join(dir, fileName), driveRes.data as string);
 				console.log(`✅ 保存成功: ${dir}/${fileName}`);
 			} catch (fileErr: any) {
