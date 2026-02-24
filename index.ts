@@ -162,45 +162,11 @@ async function saveMeetingDocuments(
 	}
 }
 
-async function saveTomorrowRawDocument(
-	event: calendar_v3.Schema$Event,
-	dir: string,
-	targetDate: Date
-): Promise<string | null> {
-	const attachments = event.attachments || [];
-	for (const att of attachments) {
-		if (att.mimeType === 'application/vnd.google-apps.document') {
-			try {
-				const driveRes = await drive.files.export({
-					fileId: att.fileId!,
-					mimeType: 'text/plain',
-				});
-
-				if (!fs.existsSync(dir)) {
-					fs.mkdirSync(dir, { recursive: true });
-				}
-
-				const dateStr = targetDate.toISOString().split('T')[0].replace(/-/g, '');
-				const fileName = `${dateStr}_raw.md`;
-				const fullPath = path.join(dir, fileName);
-				fs.writeFileSync(fullPath, driveRes.data as string);
-				return fullPath;
-			} catch (fileErr: any) {
-				console.log(
-					`❌ ファイル取得失敗: ${event.summary || 'Untitled'} の添付ファイルにアクセスできません。`
-				);
-			}
-		}
-	}
-	return null;
-}
-
 /**
  * 翌日タスクJSONの本体を構築する
  * @param tomorrow
  * @param folderName
  * @param previousSummaryPath
- * @param latestRawDocument
  * @param tomorrowEvent
  * @returns
  */
@@ -208,7 +174,6 @@ function buildTomorrowTask(
 	tomorrow: Date,
 	folderName: string,
 	previousSummaryPath: string | null,
-	latestRawDocument: string | null,
 	tomorrowEvent: calendar_v3.Schema$Event
 ) {
 const tomorrowTitle = tomorrowEvent.summary || 'Untitled';
@@ -226,11 +191,9 @@ return {
 	},
 	context_files: {
 		previous_summary: previousSummaryPath,
-		latest_raw_document: latestRawDocument,
 	},
 	// 一旦増永さんに共有をもらった内容で実装
 	instructions: [
-		'前回の会議（20260204）での未完了タスクを抽出せよ',
 		'今回の最新ドキュメントから議論すべき重要トピックを3点特定せよ',
 		'明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ'
 	],
@@ -367,16 +330,10 @@ async function runActionA() {
 				const previousSummaryPath = getPreviousSummaryPath(dir, tomorrow);
 				const tomorrowEvent = meetingId ? tomorrowEventById.get(meetingId) : undefined;
 				if (tomorrowEvent) {
-					const latestRawDocument = await saveTomorrowRawDocument(
-						tomorrowEvent,
-						dir,
-						tomorrow
-					);
 					const tomorrowTask = buildTomorrowTask(
 						tomorrow,
 						folderName,
 						previousSummaryPath,
-						latestRawDocument,
 						tomorrowEvent
 					);
 					writeTomorrowTaskFile(inboxDir, folderName, tomorrow, tomorrowTask);
