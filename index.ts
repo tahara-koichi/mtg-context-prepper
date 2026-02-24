@@ -9,8 +9,13 @@ import * as path from 'path'; // OS依存（Windows/Unix）のパス区切り文
 // サービスアカウントの認証管理インスタンスを生成。
 // Googleの認証ライブラリ google-auth-library を使用
 // google-auth-library: Node.js環境でGoogle APIのOAuth 2.0認証
+const serviceAccountPath = process.env.GCP_SERVICE_ACCOUNT_KEY;
+const serviceAccountJson = serviceAccountPath
+	? fs.readFileSync(serviceAccountPath, 'utf8')
+	: '{}';
+
 const auth = new google.auth.GoogleAuth({
-	credentials: JSON.parse(process.env.GCP_SERVICE_ACCOUNT_KEY || '{}'), // JSON Web Token生成に必要な秘密鍵をロード
+	credentials: JSON.parse(serviceAccountJson), // JSON Web Token生成に必要な秘密鍵をロード
 	scopes: [
 		'https://www.googleapis.com/auth/calendar.readonly', // Googleカレンダーの読み取り権限を定義
 		'https://www.googleapis.com/auth/drive.readonly', // Googleドライブの読み取り権限を定義
@@ -194,7 +199,7 @@ return {
 	},
 	// 一旦増永さんに共有をもらった内容で実装
 	instructions: [
-		'今回の最新ドキュメントから議論すべき重要トピックを3点特定せよ',
+		'previous_summaryから議論すべき重要トピックを3点特定せよ',
 		'明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ'
 	],
 };
