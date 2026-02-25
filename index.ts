@@ -279,7 +279,8 @@ const tomorrowScheduledTime = formatJstTimeRange(
 	tomorrowEvent.end?.dateTime
 );
 
-const memoUrl = getMemoUrl(yesterdayEvent);
+const prevTitle = yesterdayEvent.summary || 'Untitled';
+const prevMemoUrl = getMemoUrl(yesterdayEvent);
 
 return {
 	target_date: tomorrow.toISOString().split('T')[0],
@@ -287,9 +288,13 @@ return {
 		title: tomorrowTitle,
 		folder_name: folderName,
 		calendar_event_id: tomorrowEvent.id || '',
-		scheduled_time: tomorrowScheduledTime || '',
-		memo_url: memoUrl || ''
+		scheduled_time: tomorrowScheduledTime || ''
 	},
+	previous_meeting_info: {
+      title: prevTitle,
+      memo_url: prevMemoUrl || '',
+      calendar_event_id: yesterdayEvent.id || '',
+    },
 	context_files: {
 		previous_summary: previousSummaryPath,
 	},
