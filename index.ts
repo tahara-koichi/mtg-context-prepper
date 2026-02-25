@@ -243,6 +243,22 @@ async function saveMeetingDocuments(
 }
 
 /**
+ * 添付ファイルからGoogleドキュメントのURLを取得する
+ */
+function getMemoUrl(event: calendar_v3.Schema$Event): string | null {
+    if (!event.attachments) return null;
+    // Googleドキュメントを優先して探す
+    const doc = event.attachments.find(att => att.mimeType === 'application/vnd.google-apps.document');
+    if (doc && doc.fileUrl) return doc.fileUrl;
+    
+    // なければ最初のファイルのURL
+    if (event.attachments.length > 0 && event.attachments[0].fileUrl) {
+        return event.attachments[0].fileUrl;
+    }
+    return null;
+}
+
+/**
  * 翌日タスクJSONの本体を構築する
  * @param tomorrow
  * @param folderName
@@ -254,13 +270,17 @@ function buildTomorrowTask(
 	tomorrow: Date,
 	folderName: string,
 	previousSummaryPath: string | null,
-	tomorrowEvent: calendar_v3.Schema$Event
+	tomorrowEvent: calendar_v3.Schema$Event,
+	yesterdayEvent: calendar_v3.Schema$Event
 ) {
 const tomorrowTitle = tomorrowEvent.summary || 'Untitled';
 const tomorrowScheduledTime = formatJstTimeRange(
 	tomorrowEvent.start?.dateTime,
 	tomorrowEvent.end?.dateTime
 );
+
+const memoUrl = getMemoUrl(yesterdayEvent);
+
 return {
 	target_date: tomorrow.toISOString().split('T')[0],
 	meeting_info: {
@@ -268,6 +288,7 @@ return {
 		folder_name: folderName,
 		calendar_event_id: tomorrowEvent.id || '',
 		scheduled_time: tomorrowScheduledTime || '',
+		memo_url: memoUrl || ''
 	},
 	context_files: {
 		previous_summary: previousSummaryPath,
@@ -412,7 +433,8 @@ async function runActionA() {
 						tomorrow,
 						folderName,
 						previousSummaryPath,
-						tomorrowEvent
+						tomorrowEvent,
+						event
 					);
 					writeTomorrowTaskFile(inboxDir, folderName, tomorrow, tomorrowTask);
 				}
