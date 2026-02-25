@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import type { calendar_v3 } from 'googleapis';
+import type { calendar_v3, docs_v1 } from 'googleapis';
 import * as fs from 'fs'; // ファイル操作（作成・書き込み）を行うためのNode.js組み込みモジュール
 import * as path from 'path'; // OS依存（Windows/Unix）のパス区切り文字の違いを吸収し、正規化されたパスを生成するモジュール
 
@@ -19,11 +19,13 @@ const auth = new google.auth.GoogleAuth({
 	scopes: [
 		'https://www.googleapis.com/auth/calendar.readonly', // Googleカレンダーの読み取り権限を定義
 		'https://www.googleapis.com/auth/drive.readonly', // Googleドライブの読み取り権限を定義
+		'https://www.googleapis.com/auth/documents.readonly', // Googleドキュメントの読み取り権限を定義
 	],
 });
 
 const drive = google.drive({ version: 'v3', auth }); // Google Drive API v3 のリソース操作用オブジェクトを生成
 const calendar = google.calendar({ version: 'v3', auth }); // Google Calendar API v3 のリソース操作用オブジェクトを生成
+const docs = google.docs({ version: 'v1', auth }); // Google Docs API v1 のリソース操作用オブジェクトを生成
 
 /**
  * 文字列操作（サニタイズ・フォルダ名生成）
@@ -122,6 +124,59 @@ function getPreviousSummaryPath(dir: string, targetDate: Date): string | null {
 	return path.join(dir, last.name);
 }
 
+/**
+ * GoogleDocumentの構造化された内容からテキストを抽出する
+ * @param content 
+ * @returns 
+ */
+function extractTextFromContent(content?: docs_v1.Schema$StructuralElement[]): string {
+	if (!content) return '';
+	let result = '';
+	for (const el of content) {
+		const paragraph = el.paragraph;
+		if (!paragraph?.elements) continue;
+		for (const pe of paragraph.elements) {
+			const textRun = pe.textRun?.content;
+			if (textRun) result += textRun;
+		}
+	}
+	return result;
+}
+
+/**
+ * 「メモ」タブを抽出
+ * 「メモ」タブがない場合は全体のテキストを抽出
+ * @param document 
+ * @returns 
+ */
+function extractMemoText(document: docs_v1.Schema$Document): string | null {
+	const tabs = document.tabs;
+	if (!tabs || tabs.length === 0) {
+		return extractTextFromContent(document.body?.content);
+	}
+
+	const memoTab = tabs.find(
+		(t) => (t.tabProperties?.title || '').trim() === 'メモ'
+	);
+	if (memoTab?.documentTab) {
+		return extractTextFromContent(memoTab.documentTab.body?.content);
+	}
+
+	let allText = '';
+	for (const tab of tabs) {
+		if (tab.documentTab?.body?.content) {
+			allText += extractTextFromContent(tab.documentTab.body.content);
+		}
+	}
+	return allText;
+}
+
+/**
+ * カレンダーの添付Googleドキュメントを取得し、メモ（なければ全文）をサマリーファイルとして保存する
+ * @param event 
+ * @param dir 
+ * @param targetDate 
+ */
 async function saveMeetingDocuments(
 	event: calendar_v3.Schema$Event,
 	dir: string,
@@ -143,11 +198,26 @@ async function saveMeetingDocuments(
 					continue; 
 				}
 				
-				// Googleドキュメントのエクスポート処理
-				const driveRes = await drive.files.export({
-					fileId: att.fileId!,
-					mimeType: 'text/plain',
-				});
+				let docRes: { data: docs_v1.Schema$Document };
+				try {
+					docRes = await docs.documents.get({
+						documentId: att.fileId!,
+						includeTabsContent: true,
+					});
+				} catch {
+					docRes = await docs.documents.get({
+						documentId: att.fileId!,
+					});
+				}
+
+				const memoText = extractMemoText(docRes.data);
+				if (memoText === null) {
+					console.log(`⏩ メモ取得失敗: ${event.summary || 'Untitled'}`);
+					continue;
+				}
+				if (memoText.trim().length === 0) {
+					console.log(`ℹ️ メモタブなしのため全体取得: ${event.summary || 'Untitled'}`);
+				}
 
 				// フォルダ作成
 				if (!fs.existsSync(dir)) {
@@ -158,10 +228,15 @@ async function saveMeetingDocuments(
 				}
 
 				// ファイル書き込み
-				fs.writeFileSync(path.join(dir, fileName), driveRes.data as string);
+				fs.writeFileSync(path.join(dir, fileName), memoText);
 				console.log(`✅ 保存成功: ${dir}/${fileName}`);
 			} catch (fileErr: any) {
-				console.log(`❌ ファイル取得失敗: ${event.summary || 'Untitled'} の添付ファイルにアクセスできません。`);
+				const status = fileErr?.response?.status ?? fileErr?.code ?? 'unknown';
+				const message = fileErr?.response?.data?.error?.message ?? fileErr?.message ?? 'unknown error';
+				console.log(
+					`❌ ファイル取得失敗: ${event.summary || 'Untitled'} の添付ファイルにアクセスできません。` +
+					` (status: ${status}, message: ${message})`
+				);
 			}
 		}
 	}
