@@ -218,8 +218,9 @@ function writeTomorrowTaskFile(
 	tomorrow: Date,
 	tomorrowTask: ReturnType<typeof buildTomorrowTask>
 ): void {
-	const tomorrowDateStr = tomorrow.toISOString().split('T')[0].replace(/-/g, '');
-	const tomorrowFileName = `${tomorrowDateStr}_${folderName}_tomorrow_task.json`;
+	const todayJst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+	const todayDateStr = todayJst.toISOString().split('T')[0].replace(/-/g, '');
+	const tomorrowFileName = `${todayDateStr}_${folderName}_tomorrow_task.json`;
 	const tomorrowPath = path.join(inboxDir, tomorrowFileName);
 	fs.writeFileSync(tomorrowPath, JSON.stringify(tomorrowTask, null, 2));
 	console.log(`✅ 翌日タスク作成: ${tomorrowPath}`);
@@ -235,18 +236,15 @@ async function runActionA() {
 
 	// --- 検索範囲の設定 ---
 
-	// 【テスト用】今日を同期する場合
-	const targetDate = jstNow;  // ⚠️ テスト終わったら削除
-
-	// 【本番用】昨日分を同期する場合は、上の targetDate をコメントアウトして以下を解除
-	// const yesterday = new Date(jstNow);
-	// yesterday.setDate(yesterday.getDate() - 1);
-	// const targetDate = yesterday;
+	// 【本番用】昨日分を同期
+	const yesterday = new Date(jstNow);
+	yesterday.setDate(yesterday.getDate() - 1);
+	const targetDate = yesterday;
 
 	const timeMin = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0).toISOString();
 	const timeMax = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999).toISOString();
 	const tomorrow = new Date(targetDate);
-	tomorrow.setDate(tomorrow.getDate() + 1);
+	tomorrow.setDate(tomorrow.getDate() + 2);
 	const tomorrowMin = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 0, 0, 0, 0).toISOString();
 	const tomorrowMax = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59, 999).toISOString();
 
