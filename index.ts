@@ -63,25 +63,25 @@ function getFolderName(title: string): string {
 }
 
 /**
- * 先頭から、4桁の数字（ID）を取得
+ * 先頭から、6桁の数字（ID）を取得
  */
 function getMeetingId(title: string): string | null {
-	const match = title.match(/^(\d{4})[_\s-]?/);
+	const match = title.match(/^(\d{6})[_\s-]?/);
 	return match ? match[1] : null;
 }
 
 /**
  * 指定したIDで始まるフォルダが既に存在するか確認する
  * @param baseDir meetings
- * @param meetingId 検索するID (0001)
- * @returns 見つかったフォルダのフルパス (meetings/0001_xxx)、なければ null
+ * @param meetingId 検索するID (000001)
+ * @returns 見つかったフォルダのフルパス (meetings/000001_xxx)、なければ null
  */
 function findExistingMeetingFolder(baseDir: string, meetingId: string): string | null {
 	if (!fs.existsSync(baseDir)) return null;
 
 	try {
 		const entries = fs.readdirSync(baseDir, { withFileTypes: true });
-		const found = entries.find(entry => 
+		const found = entries.find(entry =>
 			entry.isDirectory() && entry.name.startsWith(`${meetingId}_`)
 		);
 		return found ? path.join(baseDir, found.name) : null;
