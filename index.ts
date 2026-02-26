@@ -63,25 +63,25 @@ function getFolderName(title: string): string {
 }
 
 /**
- * 先頭から、4桁の数字（ID）を取得
+ * 先頭から、6桁+_ の形式で数字（ID）を取得
  */
 function getMeetingId(title: string): string | null {
-	const match = title.match(/^(\d{4})[_\s-]?/);
+	const match = title.match(/^(\d{6})_/);
 	return match ? match[1] : null;
 }
 
 /**
  * 指定したIDで始まるフォルダが既に存在するか確認する
  * @param baseDir meetings
- * @param meetingId 検索するID (0001)
- * @returns 見つかったフォルダのフルパス (meetings/0001_xxx)、なければ null
+ * @param meetingId 検索するID (000001)
+ * @returns 見つかったフォルダのフルパス (meetings/000001_xxx)、なければ null
  */
 function findExistingMeetingFolder(baseDir: string, meetingId: string): string | null {
 	if (!fs.existsSync(baseDir)) return null;
 
 	try {
 		const entries = fs.readdirSync(baseDir, { withFileTypes: true });
-		const found = entries.find(entry => 
+		const found = entries.find(entry =>
 			entry.isDirectory() && entry.name.startsWith(`${meetingId}_`)
 		);
 		return found ? path.join(baseDir, found.name) : null;
@@ -257,16 +257,16 @@ async function saveMeetingDocuments(
  * 添付ファイルからGoogleドキュメントのURLを取得する
  */
 function getMemoUrl(event: calendar_v3.Schema$Event): string | null {
-    if (!event.attachments) return null;
-    // Googleドキュメントを優先して探す
-    const doc = event.attachments.find(att => att.mimeType === 'application/vnd.google-apps.document');
-    if (doc && doc.fileUrl) return doc.fileUrl;
-    
-    // なければ最初のファイルのURL
-    if (event.attachments.length > 0 && event.attachments[0].fileUrl) {
-        return event.attachments[0].fileUrl;
-    }
-    return null;
+		if (!event.attachments) return null;
+		// Googleドキュメントを優先して探す
+		const doc = event.attachments.find(att => att.mimeType === 'application/vnd.google-apps.document');
+		if (doc && doc.fileUrl) return doc.fileUrl;
+		
+		// なければ最初のファイルのURL
+		if (event.attachments.length > 0 && event.attachments[0].fileUrl) {
+				return event.attachments[0].fileUrl;
+		}
+		return null;
 }
 
 /**
@@ -302,10 +302,10 @@ return {
 		scheduled_time: tomorrowScheduledTime || ''
 	},
 	previous_meeting_info: {
-      title: prevTitle,
-      memo_url: prevMemoUrl || '',
-      calendar_event_id: yesterdayEvent.id || '',
-    },
+			title: prevTitle,
+			memo_url: prevMemoUrl || '',
+			calendar_event_id: yesterdayEvent.id || '',
+		},
 	context_files: {
 		previous_summary: previousSummaryPath,
 	},
@@ -424,9 +424,9 @@ async function runActionA() {
 			for (const event of events) {
 				const title = event.summary || 'Untitled';
 				
-				// 主催者チェック
-				if (event.organizer?.email !== email) {
-					console.log(`⏩ スキップ: ${title} (主催者ではないため)`);
+				// タイトル接頭辞が "6桁+_" でない予定は除外
+				if (!/^\d{6}_/.test(title)) {
+					console.log(`⏩ スキップ: ${title} (6桁ID接頭辞なし)`);
 					continue;
 				}
 
