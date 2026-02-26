@@ -257,16 +257,6 @@ async function saveMeetingDocuments(
  * 添付ファイルからGoogleドキュメントのURLを取得する
  */
 function getMemoUrl(event: calendar_v3.Schema$Event): string | null {
-    if (!event.attachments) return null;
-    // Googleドキュメントを優先して探す
-    const doc = event.attachments.find(att => att.mimeType === 'application/vnd.google-apps.document');
-    if (doc && doc.fileUrl) return doc.fileUrl;
-    
-    // なければ最初のファイルのURL
-    if (event.attachments.length > 0 && event.attachments[0].fileUrl) {
-        return event.attachments[0].fileUrl;
-    }
-    return null;
 }
 
 /**
