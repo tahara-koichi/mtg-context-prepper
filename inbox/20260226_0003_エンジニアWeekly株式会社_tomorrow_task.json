@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-02-27",
+  "meeting_info": {
+    "title": "0003_エンジニアWeekly株式会社3回目",
+    "folder_name": "0003_エンジニアWeekly株式会社",
+    "calendar_event_id": "62gn5gbhv1vs0andkqskk8ksic",
+    "scheduled_time": "11:00 - 12:00"
+  },
+  "previous_meeting_info": {
+    "title": "0003_エンジニアWeekly株式会社",
+    "memo_url": "https://drive.google.com/open?id=17DORimz9RWvh6NumlxbLgsBt4gMvpeBpbcYApCntiq0",
+    "calendar_event_id": "1vc7ai8t09t0d26d47sl9vghvs"
+  },
+  "context_files": {
+    "previous_summary": "meetings/0003_エンジニアWeekly株式会社/20260225_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
