@@ -12,4 +12,15 @@ gcp-sa.jsonファイルを作成し、その中にGCPのサービスアカウン
 
 ## GitHub Actionsに設定する
 - `Secrets.GCP_SERVICE_ACCOUNT_KEY`
+  - サービスアカウントの鍵ファイル(json)を設定
 - `Secrets.TARGET_ACCOUNT`
+  - 実行したい共有済アカウントのメールアドレスを設定(任意)
+
+## OpenClaw実行前に、ローカルのmtg-context-prepper配下に以下を設定
+  - .env
+  - secrets/gcp-sa.json
+
+## ローカルテスト時に設定
+- index.tsのコード修正(ローカルファイルのみ修正、git上のファイルに反映させないこと！)
+  - ⚠️ローカル実行用 のメモを確認し、コメントアウトを解除・追加
+

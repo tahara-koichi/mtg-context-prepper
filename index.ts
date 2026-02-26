@@ -3,19 +3,21 @@ import type { calendar_v3, docs_v1 } from 'googleapis';
 import * as fs from 'fs'; // ファイル操作（作成・書き込み）を行うためのNode.js組み込みモジュール
 import * as path from 'path'; // OS依存（Windows/Unix）のパス区切り文字の違いを吸収し、正規化されたパスを生成するモジュール
 
-
-
-// test
 // サービスアカウントの認証管理インスタンスを生成。
 // Googleの認証ライブラリ google-auth-library を使用
 // google-auth-library: Node.js環境でGoogle APIのOAuth 2.0認証
-const serviceAccountPath = process.env.GCP_SERVICE_ACCOUNT_KEY;
-const serviceAccountJson = serviceAccountPath
-	? fs.readFileSync(serviceAccountPath, 'utf8')
-	: '{}';
+
+// ⚠️ローカル実行用 以下コメントアウトを解除
+// const serviceAccountPath = process.env.GCP_SERVICE_ACCOUNT_KEY;
+// const serviceAccountJson = serviceAccountPath
+// 	? fs.readFileSync(serviceAccountPath, 'utf8')
+// 	: '{}';
 
 const auth = new google.auth.GoogleAuth({
-	credentials: JSON.parse(serviceAccountJson), // JSON Web Token生成に必要な秘密鍵をロード
+	// ⚠️ローカル実行用 以下をコメントアウト
+	credentials: JSON.parse(process.env.GCP_SERVICE_ACCOUNT_KEY || '{}'), // JSON Web Token生成に必要な秘密鍵をロード
+	// ⚠️ローカル実行用 以下コメントアウトを解除
+	// credentials: JSON.parse(serviceAccountJson), // JSON Web Token生成に必要な秘密鍵をロード
 	scopes: [
 		'https://www.googleapis.com/auth/calendar.readonly', // Googleカレンダーの読み取り権限を定義
 		'https://www.googleapis.com/auth/drive.readonly', // Googleドライブの読み取り権限を定義
