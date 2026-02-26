@@ -28,6 +28,15 @@ const calendar = google.calendar({ version: 'v3', auth }); // Google Calendar AP
 const docs = google.docs({ version: 'v1', auth }); // Google Docs API v1 のリソース操作用オブジェクトを生成
 
 /**
+ * 実行対象のgoogleアカウントを環境変数から取得する。
+ * 未設定時は呼び出し側で共有済み全アカウントを対象にする。
+ */
+function getTargetAccount(): string | null {
+	const email = process.env.TARGET_ACCOUNT?.trim();
+	return email || null;
+}
+
+/**
  * 文字列操作（サニタイズ・フォルダ名生成）
  * 絵文字や記号を取り除き、安全な名前にする
  */
@@ -368,8 +377,18 @@ async function runActionA() {
 		return;
 	}
 
+	const targetAccount = getTargetAccount();
+	const emailsToProcess = targetAccount
+		? targetEmails.filter((email) => email === targetAccount)
+		: targetEmails;
+
+	if (targetAccount && emailsToProcess.length === 0) {
+		console.log(`⚠️ TARGET_ACCOUNT に指定されたユーザーが共有一覧に見つかりません: ${targetAccount}`);
+		return;
+	}
+
 	// 2. 各ユーザーの処理
-	for (const email of targetEmails) {
+	for (const email of emailsToProcess) {
 		try {
 			console.log(`\n--- 処理開始: ${email} ---`);
 

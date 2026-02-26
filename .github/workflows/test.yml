@@ -27,6 +27,7 @@ jobs:
       - name: Run script
         env:
           GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          TARGET_ACCOUNT: ${{ secrets.TARGET_ACCOUNT }}
           TZ: 'Asia/Tokyo' # 日本時間で実行
         run: npx tsx index.ts
 
