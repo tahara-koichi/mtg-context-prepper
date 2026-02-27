@@ -35,6 +35,7 @@ jobs:
       - name: Commit and Push changes
         if: ${{ env.ACT != 'true' }}
         run: |
+          git config --global core.quotepath false
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
