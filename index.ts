@@ -50,6 +50,38 @@ function sanitize(text: string): string {
 }
 
 /**
+ * Git等でエスケープされたオクタル表記(\ddd)をUTF-8に戻す
+ */
+function decodeOctalEscapes(text: string): string {
+	if (!/\\[0-7]{3}/.test(text)) return text;
+	const bytes: number[] = [];
+	for (let i = 0; i < text.length; i++) {
+		const ch = text[i];
+		if (ch === '\\' && i + 3 < text.length) {
+			const oct = text.slice(i + 1, i + 4);
+			if (/^[0-7]{3}$/.test(oct)) {
+				bytes.push(parseInt(oct, 8));
+				i += 3;
+				continue;
+			}
+		}
+		const code = text.charCodeAt(i);
+		if (code > 0xff) {
+			const utf8 = Buffer.from(ch, 'utf8');
+			for (const b of utf8) bytes.push(b);
+		} else {
+			bytes.push(code);
+		}
+	}
+	return Buffer.from(bytes).toString('utf8');
+}
+
+function getEventTitle(event: calendar_v3.Schema$Event): string {
+	const raw = event.summary || 'Untitled';
+	return decodeOctalEscapes(raw);
+}
+
+/**
  * フォルダ名を「ID_案件名」の形式で取得する
  */
 function getFolderName(title: string): string {
@@ -284,13 +316,13 @@ function buildTomorrowTask(
 	tomorrowEvent: calendar_v3.Schema$Event,
 	yesterdayEvent: calendar_v3.Schema$Event
 ) {
-const tomorrowTitle = tomorrowEvent.summary || 'Untitled';
+const tomorrowTitle = getEventTitle(tomorrowEvent);
 const tomorrowScheduledTime = formatJstTimeRange(
 	tomorrowEvent.start?.dateTime,
 	tomorrowEvent.end?.dateTime
 );
 
-const prevTitle = yesterdayEvent.summary || 'Untitled';
+const prevTitle = getEventTitle(yesterdayEvent);
 const prevMemoUrl = getMemoUrl(yesterdayEvent);
 
 return {
@@ -414,7 +446,10 @@ async function runActionA() {
 			const tomorrowEvents = (tomorrowRes.data.items || []) as calendar_v3.Schema$Event[];
 			const tomorrowEventById = new Map(
 				tomorrowEvents
-				.map((e) => (e.summary ? [getMeetingId(e.summary), e] as const : [null, e] as const))
+				.map((e) => {
+					const title = getEventTitle(e);
+					return [getMeetingId(title), e] as const;
+				})
 				.filter((pair): pair is [string, typeof tomorrowEvents[number]] => !!pair[0])
 			);
 
@@ -422,7 +457,7 @@ async function runActionA() {
 			console.log(`対象期間の予定数: ${events.length}`);
 
 			for (const event of events) {
-				const title = event.summary || 'Untitled';
+				const title = getEventTitle(event);
 				
 				// タイトル接頭辞が "6桁+_" でない予定は除外
 				if (!/^\d{6}_/.test(title)) {
