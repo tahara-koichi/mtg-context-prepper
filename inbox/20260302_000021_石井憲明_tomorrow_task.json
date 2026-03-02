@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-03-03",
+  "meeting_info": {
+    "title": "000021_石井憲明　2回目",
+    "folder_name": "000021_石井憲明",
+    "calendar_event_id": "2m9fceb38t2s5idb3s6i2gsi95",
+    "scheduled_time": "21:00 - 22:00"
+  },
+  "previous_meeting_info": {
+    "title": "000021_石井憲明 様",
+    "memo_url": "https://drive.google.com/open?id=1XuQudhZHCHymcffHvoes6F8SvUooTRNZ3lihGthWLwk",
+    "calendar_event_id": "1bk1pufj1epi09p8nacnub282a"
+  },
+  "context_files": {
+    "previous_summary": "meetings/000021_石井憲明/20260301_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
