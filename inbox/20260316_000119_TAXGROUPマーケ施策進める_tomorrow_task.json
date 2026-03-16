@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-03-17",
+  "meeting_info": {
+    "title": "000119_TAXGROUPマーケ施策進める",
+    "folder_name": "000119_TAXGROUPマーケ施策進める",
+    "calendar_event_id": "3fj9h1a0npfhttjjq1dv94lkm5_20260317T223000Z",
+    "scheduled_time": "07:30 - 08:00"
+  },
+  "previous_meeting_info": {
+    "title": "000119_TAXGROUPマーケ施策進める",
+    "memo_url": "https://docs.google.com/spreadsheets/d/1fov8e6J7QadwRlzoZ9ISHH8mk1uifZOCAXTM9u6xdmo/edit?gid=503644855",
+    "calendar_event_id": "3fj9h1a0npfhttjjq1dv94lkm5_20260315T223000Z"
+  },
+  "context_files": {
+    "previous_summary": null
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
