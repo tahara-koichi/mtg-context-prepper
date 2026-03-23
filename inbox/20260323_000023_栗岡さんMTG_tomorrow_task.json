@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-03-24",
+  "meeting_info": {
+    "title": "000023_栗岡さんMTG （月～木は田原のみ金曜は村野と一緒に）",
+    "folder_name": "000023_栗岡さんMTG",
+    "calendar_event_id": "5gebaj3rcb5lj99e9ibhn04itb_20260323T230000Z",
+    "scheduled_time": "08:00 - 09:00"
+  },
+  "previous_meeting_info": {
+    "title": "",
+    "memo_url": "",
+    "calendar_event_id": ""
+  },
+  "context_files": {
+    "previous_summary": "meetings/000023_栗岡さんMTG/20260320_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
