@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-04-08",
+  "meeting_info": {
+    "title": "000039_和田さん定例",
+    "folder_name": "000039_和田さん定例",
+    "calendar_event_id": "7e37l0dmf2166isbj6ofccladf_20260407T223000Z",
+    "scheduled_time": "07:30 - 08:00"
+  },
+  "previous_meeting_info": {
+    "title": "",
+    "memo_url": "",
+    "calendar_event_id": ""
+  },
+  "context_files": {
+    "previous_summary": "meetings/000039_和田さん定例/20260304_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
