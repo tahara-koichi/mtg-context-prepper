@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-04-09",
+  "meeting_info": {
+    "title": "ベンサポ様　MTG",
+    "folder_name": "000176_ベンサポ様",
+    "calendar_event_id": "1q35gt4h1l4uug238an2c91lvm",
+    "scheduled_time": "16:30 - 17:30"
+  },
+  "previous_meeting_info": {
+    "title": "",
+    "memo_url": "",
+    "calendar_event_id": ""
+  },
+  "context_files": {
+    "previous_summary": "meetings/000176_ベンサポ様/20260331_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
