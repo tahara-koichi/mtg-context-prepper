@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-04-28",
+  "meeting_info": {
+    "title": "中河さん　MTG",
+    "folder_name": "000053_中河さん",
+    "calendar_event_id": "4cpbmnf4bu7eka46sal6itfqqq",
+    "scheduled_time": "19:30 - 20:30"
+  },
+  "previous_meeting_info": {
+    "title": "",
+    "memo_url": "",
+    "calendar_event_id": ""
+  },
+  "context_files": {
+    "previous_summary": "meetings/000053_中河さん/20260307_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
