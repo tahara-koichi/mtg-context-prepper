@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-05-28",
+  "meeting_info": {
+    "title": "【SoLabo田原】お打合せの日程調整 (戸越裕介)",
+    "folder_name": "000419_【SoLabo田原】お打合せの日程調整",
+    "calendar_event_id": "hcaatl669ra6upfmd75bttbkrk",
+    "scheduled_time": "12:00 - 13:00"
+  },
+  "previous_meeting_info": {
+    "title": "",
+    "memo_url": "",
+    "calendar_event_id": ""
+  },
+  "context_files": {
+    "previous_summary": "meetings/000419_【SoLabo田原】お打合せの日程調整/20260518_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
