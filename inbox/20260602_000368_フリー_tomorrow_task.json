@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-06-03",
+  "meeting_info": {
+    "title": "フリー　なべさん　飲み会",
+    "folder_name": "000368_フリー",
+    "calendar_event_id": "2dfedddepunv76qt01plod8o2u",
+    "scheduled_time": "19:00 - 22:30"
+  },
+  "previous_meeting_info": {
+    "title": "",
+    "memo_url": "",
+    "calendar_event_id": ""
+  },
+  "context_files": {
+    "previous_summary": "meetings/000368_フリー/20260529_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
