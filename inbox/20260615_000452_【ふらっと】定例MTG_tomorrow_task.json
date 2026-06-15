@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-06-16",
+  "meeting_info": {
+    "title": "【ふらっと】定例MTG",
+    "folder_name": "000452_【ふらっと】定例MTG",
+    "calendar_event_id": "uhdstv7qj7e0lmnoa5k2rkmnfm_20260616T053000Z",
+    "scheduled_time": "14:30 - 15:00"
+  },
+  "previous_meeting_info": {
+    "title": "",
+    "memo_url": "",
+    "calendar_event_id": ""
+  },
+  "context_files": {
+    "previous_summary": "meetings/000452_【ふらっと】定例MTG/20260609_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
