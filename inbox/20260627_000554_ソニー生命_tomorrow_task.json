@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-06-28",
+  "meeting_info": {
+    "title": "ソニー生命 飯田さん: お打合せの日程調整",
+    "folder_name": "000554_ソニー生命",
+    "calendar_event_id": "1lisluhqvlsqtpo6tqn18gq3mt",
+    "scheduled_time": "09:00 - 09:30"
+  },
+  "previous_meeting_info": {
+    "title": "",
+    "memo_url": "",
+    "calendar_event_id": ""
+  },
+  "context_files": {
+    "previous_summary": "meetings/000554_ソニー生命/20260530_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
