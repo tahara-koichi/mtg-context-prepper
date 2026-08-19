@@ -1,0 +1,21 @@
+{
+  "target_date": "2026-08-20",
+  "meeting_info": {
+    "title": "【名古屋】葵パートナーズ　見学会",
+    "folder_name": "000483_葵パートナーズ",
+    "calendar_event_id": "7mpp2gnmse595jof2iap01sk23",
+    "scheduled_time": "09:00 - 21:00"
+  },
+  "previous_meeting_info": {
+    "title": "",
+    "memo_url": "",
+    "calendar_event_id": ""
+  },
+  "context_files": {
+    "previous_summary": "meetings/000483_葵パートナーズ/20260518_summary.md"
+  },
+  "instructions": [
+    "previous_summaryから議論すべき重要トピックを3点特定せよ",
+    "明日のアジェンダ案を作成し、Google Chat用のMarkdown形式で出力せよ"
+  ]
+}
